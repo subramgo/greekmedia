@@ -18,6 +18,7 @@ i = open( input_file )
 o = open( output_file, 'wb' )
 
 o.write( 'ArticleId,Labels\n'  )
+lines_processed = 0
 
 def netcat(content,hostname="localhost", port=26542):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -45,15 +46,14 @@ def getPrediction(line):
 	vw_instances = getVWFormat(line)
 	prediction_list=list(map(netcat,vw_instances))
 	prediction_list_float = map(float,prediction_list)
-	print prediction_list_float
-	print 
 	return [i + 1 for i,x in enumerate(prediction_list_float) if x == 1.0]
 
 
 for line in i:
 	p = getPrediction(line.rstrip())
-	print p
-	print 
+	lines_processed+=1
+	if lines_processed%25 == 0:
+		print "%d lines finished."%(lines_processed)
 	p_str = ",".join(str(e) for e in p)
 	o.write(str(linecount) + "," + p_str + "\n")
 	linecount+=1
