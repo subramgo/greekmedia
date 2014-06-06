@@ -11,8 +11,8 @@ hostname = "localhost"
 port = 26542
 
 linecount = 64858
-label_header ="LABEL"
-
+label_header = "LABEL"
+buffer_size = 256
 
 i = open( input_file )
 o = open( output_file, 'wb' )
@@ -26,7 +26,7 @@ def netcat(content,hostname="localhost", port=26542):
     s.sendall(content)
     s.shutdown(socket.SHUT_WR)
     while 1:
-        data = s.recv(1024)
+        data = s.recv(buffer_size)
         if data == "":
             break
         if data != "":
@@ -46,7 +46,12 @@ def getPrediction(line):
 	vw_instances = getVWFormat(line)
 	prediction_list=list(map(netcat,vw_instances))
 	prediction_list_float = map(float,prediction_list)
-	return [i + 1 for i,x in enumerate(prediction_list_float) if x == 1.0]
+	prediction_labels = [i + 1 for i,x in enumerate(prediction_list_float) if x == 1.0]
+	if len(prediction_labels) > 0:
+		return prediction_labels
+	else:
+		p_sorted = sorted(range(len(prediction_list_float)), key=prediction_list_float.__getitem__)
+		return [p_sorted[len(p_sorted)-1]+1]
 
 
 for line in i:
