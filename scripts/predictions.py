@@ -8,7 +8,7 @@ output_file = sys.argv[2]
 
 # List of labels
 label_list =[str(ii) for ii in range(1,204)]
-hostname = "10.47.82.176"
+hostname = "localhost"
 port = 26543
 
 linecount = 64858
@@ -44,6 +44,10 @@ def netcat(contents,hostname="localhost", port=26542):
 
 def getVWFormat(line):
 	y, x = line.split( " ", 1 )
+	x=x.rstrip()
+	no_words = len(x.split(" "))
+	x+=" NO_WORDS:" + str(no_words)
+
 	vw_list = ["|" + label_header + "_" + l + " " + x + '\n' for l in label_list]
 	return vw_list
 
@@ -68,7 +72,7 @@ for line in i:
 	lines_processed+=1
 	if lines_processed%25 == 0:
 		print "%d lines finished."%(lines_processed)
-	p_str = ",".join(str(e) for e in p)
+	p_str = " ".join(str(e) for e in p)
 	o.write(str(linecount) + "," + p_str + "\n")
 	linecount+=1
 

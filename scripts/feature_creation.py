@@ -22,6 +22,8 @@ for line in i:
 	try:
 		y, x = line.split( " ", 1 )
 		x=x.rstrip()
+		no_words = len(x.split(" "))
+		x+=" NO_WORDS:" + str(no_words)
 		#  Handle multi-label
 		given_ys = y.split(",")
 		for ys in label_list:
