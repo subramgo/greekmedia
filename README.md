@@ -1,56 +1,46 @@
-Multiclass classification problem.
+#Multi-label classification of print media article to topics.#
 
-vw --loss_function hinge data/wise2014-train.vw --binary
+6/9/2014 2:13:52 PM 
 
-number of examples per pass = 12992000
-passes used = 1
-weighted example sum = 1.2992e+07
-weighted label sum = -1.28064e+07
-average loss = 0.00807774
-best constant = -0.985716
-total feature number = 3475306408
+https://www.kaggle.com/c/wise-2014
+
+There are 203 class labels, and each instance can have one or more labels. We convert this problem to a binary classification problem so that vowpal wabbit can handle it.
+
+The data in libsvm format, we use scripts/feature_creation.py to convert them to vw format. For every instance, say
+
+    103 1123:0.003061 1967:0.250931 3039:0.074709 20411:0.025801 24432:0.229228 38215:0.081586 41700:0.139233 46004:0.007150 54301:0.074447 .......
+    
+We create 203 vw entries as follows
 
 
- vw --loss_function hinge  -d data/wise2014-train.vw -l 1 --binary --ngram 3 -f models/model-09-12-01.bin
+    ....
+    -1 |LABEL_102 1123:0.003061 1967:0.250931 3039:0.074709 20411:0.025801 24432:0.229228 38215:0.081586 41700:0.139233 46004:0.007150 54301:0.074447 .......NO_WORDS:17
+    
+    +1 |LABEL_103 1123:0.003061 1967:0.250931 3039:0.074709 20411:0.025801 24432:0.229228 38215:0.081586 41700:0.139233 46004:0.007150 54301:0.074447 .......NO_WORDS:17
+     
 
-finished run
-number of examples per pass = 13165768
-passes used = 1
-weighted example sum = 1.31658e+07
-weighted label sum = -1.29777e+07
-average loss = 0.00688384
-best constant = -0.985716
-total feature number = 10452115968
+As seen above we have added a new feature ***NO_WORDS***, to count the number of words.
 
-real    11m42.021s
-user    15m20.390s
-sys     0m36.378s
+Using vw we train it as follows
 
- vw --loss_function hinge  -d data/wise2014-train.vw -l 1 --binary --ngram 3 -k -c --passes 10 -f models/model-09-12-01.bin
+    vw --loss_function hinge  -d data/wise2014-train.vw --binary  -f models/model-09-13-18.bin
+    
+    number of examples per pass = 13165768
+    passes used = 1
+    weighted example sum = 1.31658e+07
+    weighted label sum = -1.29777e+07
+    average loss = 0.00458097
+    best constant = -0.985716
+    total feature number = 3519146694
+    
+For feature prediction, we run the model in daemon mode
 
- finished run
-number of examples per pass = 11849192
-passes used = 4
-weighted example sum = 4.73968e+07
-weighted label sum = -4.67193e+07
-average loss = 0.00685186 h
-best constant = -0.985707
-total feature number = 37627661409
 
-real    40m29.367s
-user    35m52.439s
-sys     2m10.603s
+    vw -i models/model-09-13-18.bin --daemon --quiet -t --port 26543
 
- vw --loss_function hinge  -d data/wise2014-train-1.vw --binary  -f models/model-09-13-18.bin
- 
-number of examples per pass = 13165768
-passes used = 1
-weighted example sum = 1.31658e+07
-weighted label sum = -1.29777e+07
-average loss = 0.00458097
-best constant = -0.985716
-total feature number = 3519146694
+**scripts/prediction.py** is used to predict the test set.
 
-real    9m49.423s
-user    11m14.704s
-sys     0m33.680s
+This puts us in 16th place.
+
+
+

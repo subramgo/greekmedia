@@ -8,8 +8,8 @@ output_file = sys.argv[2]
 
 # List of labels
 label_list =[str(ii) for ii in range(1,204)]
-hostname = "localhost"
-port = 26543
+hostname = "127.0.0.1"
+port = 26542
 
 linecount = 64858
 label_header = "LABEL"
@@ -70,7 +70,7 @@ def getPrediction(line):
 for line in i:
 	p = getPrediction(line.rstrip())
 	lines_processed+=1
-	if lines_processed%25 == 0:
+	if lines_processed%500 == 0:
 		print "%d lines finished."%(lines_processed)
 	p_str = " ".join(str(e) for e in p)
 	o.write(str(linecount) + "," + p_str + "\n")
