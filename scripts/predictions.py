@@ -21,6 +21,7 @@ o = open( output_file, 'wb' )
 o.write( 'ArticleId,Labels\n'  )
 lines_processed = 0
 
+""" Netcat equivalent in python """
 def netcat(contents,hostname="localhost", port=26542):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.connect((hostname, port))
@@ -57,13 +58,13 @@ def getPrediction(line):
 	prediction_list = []
 	instance_count = 0
 	prediction_list=netcat(vw_instances)
-	
 	prediction_list_float = map(float,prediction_list)
 	prediction_labels = [i + 1 for i,x in enumerate(prediction_list_float) if x == 1.0]
 	if len(prediction_labels) > 0:
 		return prediction_labels
 	else:
 		p_sorted = sorted(range(len(prediction_list_float)), key=prediction_list_float.__getitem__)
+		print p_sorted
 		return [p_sorted[len(p_sorted)-1]+1]
 
 
