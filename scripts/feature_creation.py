@@ -2,6 +2,8 @@
 Create vowpal wabbit training file from libsvn format
 Prepare the data to convert k multi-label problem into K binary
 classification problem
+
+Added a feature for word_count
 """
 import sys
 
