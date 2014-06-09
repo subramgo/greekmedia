@@ -1,14 +1,15 @@
 import socket
 import sys
 import math
+import time
 
 input_file 	= sys.argv[1]
 output_file = sys.argv[2]
 
 # List of labels
 label_list =[str(ii) for ii in range(1,204)]
-hostname = "localhost"
-port = 26542
+hostname = "10.47.82.176"
+port = 26543
 
 linecount = 64858
 label_header = "LABEL"
@@ -20,20 +21,25 @@ o = open( output_file, 'wb' )
 o.write( 'ArticleId,Labels\n'  )
 lines_processed = 0
 
-def netcat(content,hostname="localhost", port=26542):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((hostname, port))
-    s.sendall(content)
-    s.shutdown(socket.SHUT_WR)
-    while 1:
-        data = s.recv(buffer_size)
-        if data == "":
-            break
-        if data != "":
-        	prediction = data
+def netcat(contents,hostname="localhost", port=26542):
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.connect((hostname, port))
+	predictions =[]
+	for content in contents:
+		s.sendall(content)
 
-    s.close()
-    return prediction
+		while 1:
+			data = s.recv(buffer_size)
+			if data == "":
+				break
+			if data != "":
+				predictions.append(data)
+				break
+	s.shutdown(socket.SHUT_WR)
+
+	
+	s.close()
+	return predictions
 
 
 def getVWFormat(line):
@@ -44,7 +50,10 @@ def getVWFormat(line):
 
 def getPrediction(line):
 	vw_instances = getVWFormat(line)
-	prediction_list=list(map(netcat,vw_instances))
+	prediction_list = []
+	instance_count = 0
+	prediction_list=netcat(vw_instances)
+	
 	prediction_list_float = map(float,prediction_list)
 	prediction_labels = [i + 1 for i,x in enumerate(prediction_list_float) if x == 1.0]
 	if len(prediction_labels) > 0:
