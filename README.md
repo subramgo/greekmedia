@@ -2,7 +2,11 @@
 
 6/9/2014 2:13:52 PM 
 
-https://www.kaggle.com/c/wise-2014
+
+[https://www.kaggle.com/c/wise-2014](https://www.kaggle.com/c/wise-2014)
+
+[https://github.com/subramgo/greekmedia](https://github.com/subramgo/greekmedia)
+
 
 There are 203 class labels, and each instance can have one or more labels. We convert this problem to a binary classification problem so that vowpal wabbit can handle it.
 
@@ -23,7 +27,7 @@ As seen above we have added a new feature ***NO_WORDS***, to count the number of
 
 Using vw we train it as follows
 
-    vw --loss_function hinge  -d data/wise2014-train.vw --binary  -f models/model-09-13-18.bin
+    vw --loss_function hinge  -d data/wise2014-train-1.vw --binary  -f models/model-09-13-18.bin
     
     number of examples per pass = 13165768
     passes used = 1
@@ -42,5 +46,8 @@ For feature prediction, we run the model in daemon mode
 
 This puts us in 16th place.
 
+------
 
+Feature Engineering
+============
 
