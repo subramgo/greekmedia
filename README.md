@@ -51,3 +51,5 @@ This puts us in 16th place.
 Feature Engineering
 ============
 
+Using script **scripts/preprocess.py** we create a list of words which occur in more than 60% of the documents.
+Running **scripts/dataReduction.py*** we
