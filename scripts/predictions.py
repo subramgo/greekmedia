@@ -47,9 +47,12 @@ def getVWFormat(line):
 	y, x = line.split( " ", 1 )
 	x=x.rstrip()
 	no_words = len(x.split(" "))
-	x+=" NO_WORDS:" + str(no_words)
-
-	vw_list = ["|" + label_header + "_" + l + " " + x + '\n' for l in label_list]
+	#x+=" NO_WORDS:" + str(no_words)
+	vw_line = ''
+	vw_list = ["|" + label_header + "_" + l + " " + x + ' ' for l in label_list]
+	vw_entries = " ".join(vw_list)
+	print vw_entries
+	vw_list =[vw_entries + "\n"]
 	return vw_list
 
 
@@ -58,6 +61,7 @@ def getPrediction(line):
 	prediction_list = []
 	instance_count = 0
 	prediction_list=netcat(vw_instances)
+	print prediction_list
 	prediction_list_float = map(float,prediction_list)
 	prediction_labels = [i + 1 for i,x in enumerate(prediction_list_float) if x == 1.0]
 	if len(prediction_labels) > 0:
