@@ -47,3 +47,7 @@ docs/_build/
 data/
 models/
 submission/
+
+# spyder workspace
+.spyderworkspace
+.spyderproject
