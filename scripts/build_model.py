@@ -12,18 +12,14 @@ from sklearn.externals import joblib
 
 from collections import defaultdict
 import numpy as np
+import time,datetime
 
-###### Read input arguments ##############
-
-input_file = sys.argv[1]
-dev_file  = sys.argv[2]
-model_file = sys.argv[3]
-output_file = sys.argv[4]
-train_or_test = sys.argv[5]
+from optparse import OptionParser
 
 hasher = FeatureHasher()
 
-BATCH_SIZE = 2000
+BATCH_SIZE = 100
+NO_ITERATIONS = 2
 y_classes = range(1,204)
 
 
@@ -81,32 +77,84 @@ def test(input_file,model_file,output_file):
 	classifier_dict = joblib.load( model_file )
 	i = open( input_file )
 	for line in i:
+
+
 		x_dict,y_entries = getXY(line)
 		x_batch.append(x_dict)
 		y_batch.append(y_entries)
 		x_new = hasher.fit_transform(x_batch)	
-		predicted_labels = ''
-		confidence_scores =[]
+		
+		prediction_dict = defaultdict(list)
+		decision_dict = defaultdict(list)
+
+
+		if len(x_batch) == BATCH_SIZE:
+			# Run a model per class on 'BATCH_SIZE' instances
+			for i in range(1,204):
+				p = classifier_dict[i].predict(x_new)
+				q = classifier_dict[i].decision_function(x_new)
+				assert len(p) == len(q)
+				for recordNo,record in enumerate(p):
+					if record == 1:
+						prediction_dict[recordNo].append(i)
+					decision_dict[recordNo].append(q[recordNo])
+
+			# Print predictions
+			for r in range(0,BATCH_SIZE):
+				predicted_labels = []
+				
+				prediction_labels = prediction_dict[r]
+				if len(prediction_labels) == 0:
+					confidence_scores = decision_dict[r]
+					p_sorted = sorted(range(len(confidence_scores)), key=confidence_scores.__getitem__)
+					prediction_labels.append(p_sorted[len(p_sorted)-1]+1)	
+
+
+				predicted_labels_string = " ".join(str(pl) for pl in prediction_labels)
+				o.write(str(linecount) + "," + predicted_labels_string + "\n")
+				linecount+=1
+				records_processed+=1
+
+				predicted_labels_string = ''
+			
+			print 'Finished %d instances - %s '%(records_processed,datetime.datetime.now())
+
+
+
+
+			x_batch =[]
+			y_batch =[]
+
+
+	if len(x_batch) > 0:
+		print "Finishing final %d instances"%(len(x_batch))
+		# Run a model per class on 'BATCH_SIZE' instances
 		for i in range(1,204):
 			p = classifier_dict[i].predict(x_new)
 			q = classifier_dict[i].decision_function(x_new)
-			confidence_scores.append(q[0])
-			if p[0] == 1:
-				predicted_labels+= str(i) + ' '
-		if predicted_labels == '':
-			p_sorted = sorted(range(len(confidence_scores)), key=confidence_scores.__getitem__)
-			predicted_labels = str(p_sorted[len(p_sorted)-1]+1)
+			assert len(p) == len(q)
+			for recordNo,record in enumerate(p):
+				if record == 1:
+					prediction_dict[recordNo].append(i)
+				decision_dict[recordNo].append(q[recordNo])
+
+		# Print predictions
+		for r in range(0,len(x_batch)-1):
+			predicted_labels = []
+			
+			prediction_labels = prediction_dict[r]
+			if len(prediction_labels) == 0:
+				confidence_scores = decision_dict[r]
+				p_sorted = sorted(range(len(confidence_scores)), key=confidence_scores.__getitem__)
+				prediction_labels.append(p_sorted[len(p_sorted)-1]+1)	
 
 
-		predicted_labels = predicted_labels.strip()
-		o.write(str(linecount) + "," + predicted_labels + "\n")
-		linecount+=1
-		records_processed+=1
+			predicted_labels_string = " ".join(str(pl) for pl in prediction_labels)
+			o.write(str(linecount) + "," + predicted_labels_string + "\n")
+			linecount+=1
+			predicted_labels_string = ''
+			
 
-		if records_processed%50 == 0:
-			print 'Finished %d instances '%(records_processed)
-		x_batch =[]
-		y_batch =[]
 
 
 def train(input_file,dev_file,model_file):
@@ -121,17 +169,43 @@ def train(input_file,dev_file,model_file):
 
 	print 'Running in batchsize of %d'%(BATCH_SIZE)
 
-	i = open( input_file )
-	iteration =0
+	in_file = open( input_file )
 
-	for line in i:
-		x_dict,y_entries = getXY(line)
 
-		if x_dict != None and y_entries != None:
-			x_batch.append(x_dict)
-			y_batch.append(y_entries)
+	for epoch in range(0,NO_ITERATIONS):
+		iteration =0
+		in_file.seek(0)
+		print 'Running epoch = %d '%(epoch)
+		for line in in_file:
+			x_dict,y_entries = getXY(line)
 
-		if len(x_batch) == BATCH_SIZE:
+			if x_dict != None and y_entries != None:
+				x_batch.append(x_dict)
+				y_batch.append(y_entries)
+
+			if len(x_batch) == BATCH_SIZE:
+				iteration+=1
+				x_new = hasher.fit_transform(x_batch)	
+				y_new = label_binarize(y_batch,classes = y_classes, multilabel=True)
+
+				
+				for i in range(1,204):
+					clsf = classifier_dict[i]
+					classifier_dict[i].partial_fit(x_new,y_new[:,i-1],classes=[0,1])
+				
+				
+				total_accuracy=0
+				
+				for i in range(1,204):
+					total_accuracy+=classifier_dict[i].score(x_test,y_test[:,i-1])
+				avg_accuracy =total_accuracy/(1.0*203)
+				
+				print "After %d iteration(s), accuracy = %f " %(iteration,avg_accuracy)
+
+				x_batch = []
+				y_batch = []	
+
+		if len(x_batch) > 0:
 			iteration+=1
 			x_new = hasher.fit_transform(x_batch)	
 			y_new = label_binarize(y_batch,classes = y_classes, multilabel=True)
@@ -150,8 +224,8 @@ def train(input_file,dev_file,model_file):
 			
 			print "After %d iteration(s), accuracy = %f " %(iteration,avg_accuracy)
 
-			x_batch = []
-			y_batch = []	
+
+
 
 	############## Save the model #########################
 
@@ -160,7 +234,33 @@ def train(input_file,dev_file,model_file):
 
 
 if __name__ == "__main__":
-	if train_or_test == "train":
+
+    usage = "usage: %prog [options] arg"
+    
+    parser = OptionParser(usage)
+    parser.add_option("-i", "--input", dest="input_file",action="store",type="string",
+                      help="training or testing data set file")
+    parser.add_option("-d", "--dev",dest ="dev_file",action="store",type="string",
+                      help="dev data set file")
+    parser.add_option("-m", "--model",dest ="model_file",action="store",type="string",
+                      help="dev data set file")
+    parser.add_option("-o", "--output",dest ="output_file",action="store",type="string",
+                      help="output file")
+    parser.add_option("-t", "--train",dest ="train",action="store_true",default=True,
+                      help="Is training or testing")
+    parser.add_option("-p", "--predict",dest ="train",action="store_false",default=False,
+                      help="Is testing")
+
+    (options,arg) = parser.parse_args()
+
+    is_train 	=  options.train
+    input_file 	=  options.input_file
+    dev_file 	=  options.dev_file
+    model_file	=  options.model_file
+    output_file =  options.output_file	
+
+
+    if is_train :
 		train(input_file,dev_file,model_file)
-	else:
+    else:
 		test(input_file,model_file,output_file)
